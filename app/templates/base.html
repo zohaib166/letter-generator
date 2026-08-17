@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}BGIEM Document Generator{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="site-brand">
+            <strong>BGIEM</strong>
+            <span>Document Generator</span>
+        </div>
+
+        <nav class="site-navigation">
+            <a href="/">Home</a>
+            <a href="/documents">Generated Documents</a>
+        </nav>
+    </header>
+
+    <main class="container">
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+    {% block extra_js %}
+    {% endblock %}
+
+</body>
+
+</html>

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}
+Create Official Document - BGIEM Document Generator
+{% endblock %}
+
+{% block content %}
+
+<div class="editor-layout">
+
+    <!-- ==========================================
+         LEFT PANEL - DOCUMENT FORM
+         ========================================== -->
+
+    <section class="editor-panel">
+
+        <div class="editor-heading">
+
+            <div class="document-code" id="selected-document-code">
+                BGIEM
+            </div>
+
+            <h2 id="selected-document-name">
+                Create Official Document
+            </h2>
+
+            <p>
+                Select the document type and enter the required details.
+            </p>
+
+        </div>
+
+
+        <form id="document-form">
+
+            <!-- ==========================================
+         DOCUMENT TYPE
+         ========================================== -->
+
+            <div class="form-group">
+
+                <label for="document_type_code">
+                    Document Type <span>*</span>
+                </label>
+
+                <select id="document_type_code">
+
+                    <option value="">
+                        -- Select Document Type --
+                    </option>
+
+                    {% for document_type in document_types %}
+
+                    <option value="{{ document_type.code }}" data-name="{{ document_type.name }}">
+                        {{ document_type.name }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ==========================================
+         ENROLLMENT NUMBER
+         ========================================== -->
+
+            <div class="form-group">
+
+                <label for="enrollment_no">
+                    Enrollment Number <span>*</span>
+                </label>
+
+                <input type="text" id="enrollment_no" placeholder="Enter enrollment number" autocomplete="off">
+
+            </div>
+
+
+            <!-- ==========================================
+         STUDENT NAME
+         ========================================== -->
+
+            <div class="form-group">
+
+                <label for="student_name">
+                    Student Name <span>*</span>
+                </label>
+
+                <input type="text" id="student_name" placeholder="Enter student's full name" autocomplete="off">
+
+            </div>
+
+
+            <!-- ==========================================
+         TOPIC / PURPOSE
+         ========================================== -->
+
+            <div class="form-group">
+
+                <label for="topic">
+                    Topic / Purpose <span>*</span>
+                </label>
+
+                <input type="text" id="topic" placeholder="Enter topic or purpose">
+
+            </div>
+
+
+            <!-- ==========================================
+         SUBJECT
+         ========================================== -->
+
+            <div class="form-group">
+
+                <label for="subject">
+                    Subject
+                    <span class="optional">(Optional)</span>
+                </label>
+
+                <input type="text" id="subject" placeholder="Optional subject line">
+
+            </div>
+
+
+            <!-- ==========================================
+         WORD LIMIT
+         ========================================== -->
+
+            <div class="form-group small-field">
+
+                <label for="word_limit">
+                    Word Limit
+                </label>
+
+                <input type="number" id="word_limit" value="250" min="50" max="5000">
+
+            </div>
+
+
+            <!-- ==========================================
+         LETTER BODY
+         ========================================== -->
+
+            <div class="form-group">
+
+                <div class="body-label-row">
+
+                    <label for="body">
+                        Letter Body
+                    </label>
+
+                    <span id="word-count">
+                        0 / 250 words
+                    </span>
+
+                </div>
+
+
+                <!-- Rich Text Toolbar -->
+
+                <div class="rich-text-toolbar">
+
+                    <button type="button" data-command="bold" title="Bold">
+                        <strong>B</strong>
+                    </button>
+
+                    <button type="button" data-command="italic" title="Italic">
+                        <em>I</em>
+                    </button>
+
+                    <button type="button" data-command="underline" title="Underline">
+                        <u>U</u>
+                    </button>
+
+                    <span class="toolbar-divider"></span>
+
+                    <button type="button" data-command="insertUnorderedList" title="Bullet List">
+                        • List
+                    </button>
+
+                    <button type="button" data-command="insertOrderedList" title="Numbered List">
+                        1. List
+                    </button>
+
+                    <span class="toolbar-divider"></span>
+
+                    <button type="button" data-command="justifyLeft" title="Align Left">
+                        ⬅
+                    </button>
+
+                    <button type="button" data-command="justifyCenter" title="Center">
+                        ↔
+                    </button>
+
+                    <button type="button" data-command="justifyRight" title="Align Right">
+                        ➡
+                    </button>
+
+                    <button type="button" data-command="justifyFull" title="Justify">
+                        ☰
+                    </button>
+
+                </div>
+
+
+                <!-- Rich Text Editor -->
+
+                <div id="body" class="rich-text-editor" contenteditable="true"
+                    data-placeholder="Type the body of the letter here..."></div>
+
+            </div>
+
+
+            <!-- ==========================================
+         AI GENERATION
+         ========================================== -->
+
+            <div class="ai-section">
+
+                <button type="button" id="generate-ai" class="btn btn-ai">
+                    ✨ Generate with AI
+                </button>
+
+                <span id="ai-status"></span>
+
+            </div>
+
+
+            <!-- ==========================================
+         ACTIONS
+         ========================================== -->
+
+            <div class="form-actions">
+
+                <a href="/" class="btn btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="button" id="generate-pdf" class="btn btn-primary">
+                    Generate PDF
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <!-- ==========================================
+         RIGHT PANEL - LIVE PREVIEW
+         ========================================== -->
+
+    <section class="preview-panel">
+
+        <div class="preview-heading">
+
+            <strong>Live Preview</strong>
+
+            <span>A4 • Times New Roman</span>
+
+        </div>
+
+
+        <!-- A4 PAGE -->
+
+        <div class="a4-page" id="a4-preview">
+
+            <!-- Letterhead -->
+
+            <img src="{{ url_for(
+                    'static',
+                    path='images/letterhead.png'
+                ) }}" class="letterhead-background" alt="">
+
+
+            <!-- Document Content -->
+
+            <div class="document-content">
+
+
+                <!-- Reference + Date -->
+
+                <div class="document-meta">
+
+                    <span id="preview-reference">
+                        Ref. No.: __________________
+                    </span>
+
+                    <span id="preview-date">
+                        {{ current_date }}
+                    </span>
+
+                </div>
+
+
+                <!-- Document Topic / Heading -->
+
+                <div class="preview-topic" id="preview-topic" style="display: none;"></div>
+
+
+                <!-- Subject -->
+
+                <div class="preview-subject" id="preview-subject-container" style="display: none;">
+
+                    <strong>Subject:</strong>
+
+                    <span id="preview-subject"></span>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div id="preview-body" class="preview-body">
+
+                    <p>
+                        The letter body will appear here...
+                    </p>
+
+                </div>
+
+
+                <!-- Signature -->
+
+                <div class="signature-area">
+
+                    <div class="signature-placeholder">
+
+                        <div id="preview-signature">
+                            __________________________
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script src="{{ url_for(
+    'static',
+    path='js/document-form.js'
+) }}"></script>
+
+{% endblock %}

@@ -1,0 +1,984 @@
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.site-header {
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 28px;
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+
+.site-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.site-brand strong {
+    font-size: 24px;
+    color: #172554;
+}
+
+
+.site-brand span {
+    font-size: 16px;
+    color: #4b5563;
+}
+
+
+.site-navigation {
+    display: flex;
+    gap: 24px;
+}
+
+
+.site-navigation a {
+    text-decoration: none;
+    color: #374151;
+    font-size: 15px;
+}
+
+
+.site-navigation a:hover {
+    color: #1d4ed8;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+main {
+    width: 100%;
+}
+
+
+/* =========================================================
+   DOCUMENT EDITOR
+   ========================================================= */
+
+.editor-layout {
+
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(420px, 520px) minmax(794px, 1fr);
+
+    gap: 32px;
+
+    padding: 32px;
+
+    align-items: start;
+}
+
+
+/* =========================================================
+   LEFT EDITOR PANEL
+   ========================================================= */
+
+.editor-panel {
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    padding: 28px;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+
+.editor-heading {
+    margin-bottom: 24px;
+}
+
+
+.document-code {
+    display: inline-block;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #1d4ed8;
+
+    background: #eff6ff;
+
+    border-radius: 5px;
+
+    padding: 5px 9px;
+
+    margin-bottom: 8px;
+}
+
+
+.editor-heading h2 {
+    margin: 4px 0 6px;
+
+    font-size: 24px;
+}
+
+
+.editor-heading p {
+    margin: 0;
+
+    color: #6b7280;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+
+.form-group label {
+    display: block;
+
+    font-weight: 600;
+
+    font-size: 14px;
+
+    margin-bottom: 7px;
+}
+
+
+.form-group label span {
+    color: #dc2626;
+}
+
+
+.form-group label .optional {
+    color: #9ca3af;
+
+    font-weight: 400;
+
+    margin-left: 4px;
+}
+
+
+.form-group input,
+.form-group textarea {
+
+    width: 100%;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 6px;
+
+    padding: 10px 12px;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size: 14px;
+
+    outline: none;
+
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+}
+
+
+.form-group input:focus,
+.form-group textarea:focus {
+
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+
+.form-group textarea {
+
+    resize: vertical;
+
+    min-height: 280px;
+
+    line-height: 1.5;
+}
+
+
+.small-field input {
+    width: 120px;
+}
+
+
+.body-label-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+}
+
+
+#word-count {
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+
+/* =========================================================
+   AI SECTION
+   ========================================================= */
+
+.ai-section {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+
+#ai-status {
+
+    font-size: 13px;
+
+    color: #6b7280;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: none;
+
+    border-radius: 6px;
+
+    padding: 10px 16px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s,
+        transform 0.05s;
+}
+
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+
+.btn-primary {
+
+    background: #1d4ed8;
+
+    color: #ffffff;
+}
+
+
+.btn-primary:hover {
+    background: #1e40af;
+}
+
+
+.btn-secondary {
+
+    background: #e5e7eb;
+
+    color: #374151;
+}
+
+
+.btn-secondary:hover {
+    background: #d1d5db;
+}
+
+
+.btn-ai {
+
+    background: #7c3aed;
+
+    color: #ffffff;
+}
+
+
+.btn-ai:hover {
+    background: #6d28d9;
+}
+
+
+.form-actions {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding-top: 8px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+
+/* =========================================================
+   RIGHT PREVIEW PANEL
+   ========================================================= */
+
+.preview-panel {
+
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+}
+
+
+.preview-heading {
+
+    width: 794px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 12px;
+
+    font-size: 14px;
+
+    color: #374151;
+}
+
+
+.preview-heading span {
+
+    color: #6b7280;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   A4 PAGE
+   ========================================================= */
+
+.a4-page {
+
+    position: relative;
+
+    width: 794px;
+
+    height: 1123px;
+
+    background: #ffffff;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.15);
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   LETTERHEAD BACKGROUND
+   ========================================================= */
+
+.letterhead-background {
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: fill;
+
+    z-index: 0;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   DOCUMENT CONTENT
+   ========================================================= */
+
+.document-content {
+
+    position: absolute;
+
+    top: 165px;
+
+    left: 70px;
+
+    right: 70px;
+
+    bottom: 105px;
+
+    z-index: 1;
+
+    font-family:
+        "Times New Roman",
+        Times,
+        serif;
+
+    font-size: 12pt;
+
+    line-height: 1.45;
+
+    color: #000000;
+}
+
+
+/* =========================================================
+   REFERENCE / DATE
+   ========================================================= */
+
+.document-meta {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    margin-top: 70px;
+
+    margin-bottom: 28px;
+
+    font-size: 12pt;
+}
+
+
+#preview-reference {
+
+    font-weight: normal;
+}
+
+
+#preview-date {
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   SUBJECT
+   ========================================================= */
+
+.preview-subject {
+
+    margin-bottom: 20px;
+
+    font-family:
+        "Times New Roman",
+        Times,
+        serif;
+
+    font-size: 12pt;
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+.preview-body {
+
+    font-family:
+        "Times New Roman",
+        Times,
+        serif;
+
+    font-size: 12pt;
+
+    line-height: 1.5;
+
+    text-align: justify;
+
+    text-justify: inter-word;
+}
+
+
+.preview-body p {
+
+    margin-top: 0;
+
+    margin-bottom: 14px;
+
+    text-align: justify;
+}
+
+
+/* =========================================================
+   SIGNATURE
+   ========================================================= */
+
+.signature-area {
+
+    position: absolute;
+
+    right: 0;
+
+    bottom: 0;
+
+    text-align: left;
+
+    font-family:
+        "Times New Roman",
+        Times,
+        serif;
+
+    font-size: 12pt;
+}
+
+/* ==========================================
+   DOCUMENT TOPIC / PURPOSE
+   ========================================== */
+
+.preview-topic {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 14pt;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 18px;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+
+.signature-placeholder {
+
+    min-width: 180px;
+
+    text-align: right;
+}
+
+
+.signature-placeholder strong {
+
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1350px) {
+
+    .editor-layout {
+
+        grid-template-columns:
+            minmax(380px, 450px) minmax(794px, 1fr);
+
+        padding: 20px;
+
+        gap: 20px;
+    }
+
+}
+
+
+@media (max-width: 1200px) {
+
+    .editor-layout {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .preview-panel {
+
+        align-items: flex-start;
+
+        overflow-x: auto;
+
+    }
+
+}
+
+
+/* =========================================================
+   PRINT
+   ========================================================= */
+
+@media print {
+
+    body {
+        background: #ffffff;
+    }
+
+    .site-header,
+    .editor-panel,
+    .preview-heading {
+        display: none !important;
+    }
+
+    .editor-layout {
+        display: block;
+
+        padding: 0;
+
+        margin: 0;
+    }
+
+    .preview-panel {
+        display: block;
+    }
+
+    .a4-page {
+
+        width: 210mm;
+
+        height: 297mm;
+
+        box-shadow: none;
+
+        margin: 0;
+    }
+}
+
+
+/* =========================================================
+   DOCUMENTS GRID & LIST ARCHIVE
+   ========================================================= */
+
+.documents-page {
+    padding: 32px;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.page-title {
+    margin-bottom: 24px;
+}
+
+.page-title h2 {
+    font-size: 24px;
+    margin: 0 0 6px;
+    color: #111827;
+}
+
+.page-title p {
+    color: #6b7280;
+    margin: 0;
+    font-size: 14px;
+}
+
+.document-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    margin-top: 24px;
+}
+
+.document-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.document-card:hover {
+    transform: translateY(-2px);
+    border-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+.document-card .document-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.table-container {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow-x: auto;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.documents-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: left;
+}
+
+.documents-table th,
+.documents-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.documents-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+}
+
+.documents-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-code {
+    background: #eff6ff;
+    color: #1d4ed8;
+    margin-right: 6px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.empty-state {
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px;
+    color: #1f2937;
+}
+
+.empty-state p {
+    color: #6b7280;
+    margin: 0;
+}
+
+/* =========================================================
+   RICH TEXT BODY EDITOR
+   ========================================================= */
+
+.rich-text-toolbar {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    padding: 7px 8px;
+
+    background: #f9fafb;
+
+    border: 1px solid #d1d5db;
+
+    border-bottom: none;
+
+    border-radius: 6px 6px 0 0;
+
+    flex-wrap: wrap;
+}
+
+
+.rich-text-toolbar button {
+
+    min-width: 32px;
+
+    height: 30px;
+
+    padding: 4px 8px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 4px;
+
+    background: #ffffff;
+
+    color: #374151;
+
+    cursor: pointer;
+
+    font-size: 13px;
+}
+
+
+.rich-text-toolbar button:hover {
+
+    background: #e5e7eb;
+}
+
+
+.rich-text-toolbar button.active {
+
+    background: #dbeafe;
+
+    border-color: #2563eb;
+
+    color: #1d4ed8;
+}
+
+
+.toolbar-divider {
+
+    width: 1px;
+
+    height: 22px;
+
+    background: #d1d5db;
+
+    margin: 0 4px;
+}
+
+
+.rich-text-editor {
+
+    width: 100%;
+
+    min-height: 280px;
+
+    max-height: 600px;
+
+    overflow-y: auto;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 0 0 6px 6px;
+
+    padding: 12px;
+
+    background: #ffffff;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+
+    outline: none;
+
+    white-space: pre-wrap;
+}
+
+
+.rich-text-editor:focus {
+
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+
+/* Placeholder */
+
+.rich-text-editor:empty::before {
+
+    content: attr(data-placeholder);
+
+    color: #9ca3af;
+
+    pointer-events: none;
+}
+
+
+/* Preserve pasted paragraphs */
+
+.rich-text-editor p {
+
+    margin-top: 0;
+
+    margin-bottom: 12px;
+}
+
+
+.rich-text-editor ul,
+.rich-text-editor ol {
+
+    margin-top: 8px;
+
+    margin-bottom: 12px;
+
+    padding-left: 28px;
+}
