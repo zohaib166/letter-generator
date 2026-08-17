@@ -46,6 +46,13 @@ STORAGE_DIR.mkdir(
     exist_ok=True
 )
 
+SIGNATURES_DIR = BASE_DIR / "storage" / "signatures"
+
+SIGNATURES_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
 
 # ---------------------------------------------------------
 # FONT REGISTRATION
@@ -505,6 +512,7 @@ def generate_document_pdf(
     subject: Optional[str],
     body: str,
     signature_authority: Optional[str] = None,
+    signature_image: Optional[str] = None,
 ) -> Dict[str, Any]:
 
 
@@ -821,42 +829,96 @@ def generate_document_pdf(
     signature_x = content_right
 
 
+    # -------------------------------------------------
+    # Signature image (if provided)
+    # -------------------------------------------------
+
+    sig_image_path = None
+
+    if signature_image:
+        candidate = SIGNATURES_DIR / signature_image
+        if candidate.exists() and candidate.is_file():
+            sig_image_path = candidate
+
+
+    # Reserve space: image height + gap + text lines
+    TEXT_LINE_H = FONT_SIZE + 3
+
+    text_lines = (
+        [l.strip() for l in signature_text.split("\n") if l.strip()]
+        if signature_text
+        else []
+    )
+
+    num_text_lines = len(text_lines)
+
+    # Image dimensions in PDF points
+    SIG_IMG_HEIGHT = 40   # pt — roughly 14mm, proportional width
+    SIG_IMG_GAP    = 6    # pt gap between image and text
+
+    # Calculate the baseline of the bottom text line
     signature_y = 98
 
+    # We match the min-width: 180px in preview (180px * 0.75 = 135 pt)
+    sig_block_width = 180 * PX_TO_PT
+    sig_center_x = signature_x - (sig_block_width / 2)
 
+    # Draw text lines (bottom-up, centred)
     pdf.setFont(
         BOLD_FONT,
         FONT_SIZE
     )
 
+    if text_lines:
 
-    if signature_text:
+        for index, line in enumerate(text_lines):
 
-        # Preserve multiple lines entered
-        # in the signature authority field.
-
-        lines = signature_text.split("\n")
-
-
-        for index, line in enumerate(lines):
-
-            pdf.drawRightString(
-                signature_x,
+            pdf.drawCentredString(
+                sig_center_x,
                 signature_y
                 + (
-                    (len(lines) - index - 1)
-                    * (FONT_SIZE + 3)
+                    (num_text_lines - index - 1)
+                    * TEXT_LINE_H
                 ),
-                line.strip()
+                line
             )
-
 
     else:
 
-        pdf.drawRightString(
-            signature_x,
+        pdf.drawCentredString(
+            sig_center_x,
             signature_y,
             "Signing Authority"
+        )
+        num_text_lines = 1
+
+
+    # Draw signature image above the text block
+    if sig_image_path:
+
+        from PIL import Image as PILImage
+
+        with PILImage.open(sig_image_path) as img:
+            img_w, img_h = img.size
+
+        aspect = img_w / img_h if img_h else 1
+        sig_img_width = SIG_IMG_HEIGHT * aspect
+
+        img_y = (
+            signature_y
+            + (num_text_lines * TEXT_LINE_H)
+            + SIG_IMG_GAP
+        )
+
+        img_x = sig_center_x - (sig_img_width / 2)
+
+        pdf.drawImage(
+            str(sig_image_path),
+            img_x,
+            img_y,
+            width=sig_img_width,
+            height=SIG_IMG_HEIGHT,
+            mask="auto",
         )
 
 

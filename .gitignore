@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 storage/pdfs/
 storage/letterhead/
-storage/signatures/
+storage/signatures/*
+!storage/signatures/.gitkeep
 .pytest_cache/
 storage/documents/

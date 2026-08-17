@@ -1,14 +1,15 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+import shutil
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.services.supabase_client import supabase
 from app.services.ai_service import generate_letter_content
-from app.services.pdf_generator import generate_document_pdf, STORAGE_DIR
+from app.services.pdf_generator import generate_document_pdf, STORAGE_DIR, SIGNATURES_DIR
 
 
 router = APIRouter(
@@ -40,6 +41,8 @@ class PDFGenerateRequest(BaseModel):
     subject: Optional[str] = None
     body: str
     word_limit: int = 250
+    signature_authority: Optional[str] = None
+    signature_image: Optional[str] = None
 
 
 # ---------------------------------------------------------
@@ -195,6 +198,8 @@ def api_generate_pdf(payload: PDFGenerateRequest):
             topic=payload.topic,
             subject=payload.subject,
             body=payload.body,
+            signature_authority=payload.signature_authority,
+            signature_image=payload.signature_image,
         )
 
         # 4. Insert Metadata Record into Supabase `bgiem_docs.documents`
@@ -260,6 +265,68 @@ def download_pdf(filename: str):
         filename=filename,
         media_type="application/pdf"
     )
+
+
+# ---------------------------------------------------------
+# SIGNATURE IMAGE ROUTES
+# ---------------------------------------------------------
+
+@router.get("/signatures")
+def list_signatures():
+    """
+    Return a list of signature images saved in storage/signatures/.
+    Each entry has { filename, url }.
+    """
+    SIGNATURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    allowed_extensions = {".png", ".jpg", ".jpeg", ".webp"}
+
+    images = []
+
+    for file in sorted(SIGNATURES_DIR.iterdir()):
+        if file.is_file() and file.suffix.lower() in allowed_extensions:
+            images.append({
+                "filename": file.name,
+                "url": f"/storage/signatures/{file.name}"
+            })
+
+    return {"status": "ok", "signatures": images}
+
+
+@router.post("/signatures/upload")
+async def upload_signature(file: UploadFile = File(...)):
+    """
+    Upload a signature image to storage/signatures/.
+    Accepts PNG, JPEG, WEBP.
+    """
+    SIGNATURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    allowed_content_types = {
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "image/webp",
+    }
+
+    if file.content_type not in allowed_content_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PNG, JPEG, and WebP images are allowed."
+        )
+
+    # Sanitise the filename
+    safe_name = Path(file.filename).name
+
+    dest_path = SIGNATURES_DIR / safe_name
+
+    with dest_path.open("wb") as out:
+        shutil.copyfileobj(file.file, out)
+
+    return {
+        "status": "ok",
+        "filename": safe_name,
+        "url": f"/storage/signatures/{safe_name}"
+    }
 
 
 @router.get("/test-pdf")

@@ -11,6 +11,18 @@ const wordLimitField = document.getElementById("word_limit");
 const bodyField = document.getElementById("body");
 const signatureAuthorityField = document.getElementById("signature_authority");
 
+// Signature image picker
+const signatureImageSelect =
+    document.getElementById("signature_image_select");
+const signatureImageInlinePreview =
+    document.getElementById("signature_image_inline_preview");
+const signatureImageUploadInput =
+    document.getElementById("signature_image_upload");
+const uploadSignatureBtn =
+    document.getElementById("upload-signature-btn");
+const uploadSignatureStatus =
+    document.getElementById("upload-signature-status");
+
 const generateAiBtn = document.getElementById("generate-ai");
 const aiStatus = document.getElementById("ai-status");
 const generatePdfBtn = document.getElementById("generate-pdf");
@@ -52,6 +64,9 @@ const previewBody =
 
 const previewSignature =
     document.getElementById("preview-signature");
+
+const previewSignatureImg =
+    document.getElementById("preview-signature-img");
 
 
 /* ==========================================
@@ -458,24 +473,49 @@ function updateSignaturePreview() {
         previewSignature.innerHTML =
             "__________________________";
 
-        return;
+    } else {
+
+        /*
+           Preserve multiple lines entered
+           by the user.
+        */
+
+        const lines =
+            authority
+                .split("\n")
+                .map(line => escapeHtml(line.trim()))
+                .filter(line => line.length > 0);
+
+
+        previewSignature.innerHTML =
+            lines.join("<br>");
     }
 
 
-    /*
-       Preserve multiple lines entered
-       by the user.
-    */
+    // Update signature image in the preview
 
-    const lines =
-        authority
-            .split("\n")
-            .map(line => escapeHtml(line.trim()))
-            .filter(line => line.length > 0);
+    if (previewSignatureImg) {
 
+        const selectedImg =
+            signatureImageSelect
+                ? signatureImageSelect.value
+                : "";
 
-    previewSignature.innerHTML =
-        lines.join("<br>");
+        if (selectedImg) {
+
+            previewSignatureImg.src =
+                `/storage/signatures/${selectedImg}`;
+
+            previewSignatureImg.style.display =
+                "inline-block";
+
+        } else {
+
+            previewSignatureImg.src = "";
+            previewSignatureImg.style.display =
+                "none";
+        }
+    }
 }
 
 
@@ -491,6 +531,196 @@ function escapeHtml(text) {
     div.textContent = text;
 
     return div.innerHTML;
+}
+
+
+/* ==========================================
+   SIGNATURE IMAGE — LOAD & UPLOAD
+   ========================================== */
+
+async function loadSignatureImages(selectFilename) {
+
+    if (!signatureImageSelect) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch("/api/signatures");
+
+        const data =
+            await response.json();
+
+
+        // Keep the placeholder option, rebuild the rest
+
+        signatureImageSelect.innerHTML =
+            '<option value="">-- No signature image --</option>';
+
+
+        if (data.signatures && data.signatures.length > 0) {
+
+            data.signatures.forEach(sig => {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = sig.filename;
+                option.textContent = sig.filename;
+
+                if (selectFilename &&
+                    sig.filename === selectFilename) {
+
+                    option.selected = true;
+                }
+
+                signatureImageSelect.appendChild(option);
+
+            });
+        }
+
+
+        // Trigger preview update after populating
+        updateInlineSignatureImagePreview();
+        updateSignaturePreview();
+
+
+    } catch (err) {
+
+        console.error(
+            "[Signatures] Failed to load signature list:",
+            err
+        );
+    }
+}
+
+
+function updateInlineSignatureImagePreview() {
+
+    if (!signatureImageInlinePreview ||
+        !signatureImageSelect) {
+        return;
+    }
+
+    const selected =
+        signatureImageSelect.value;
+
+    if (selected) {
+
+        signatureImageInlinePreview.src =
+            `/storage/signatures/${selected}`;
+
+        signatureImageInlinePreview.style.display =
+            "block";
+
+    } else {
+
+        signatureImageInlinePreview.src = "";
+
+        signatureImageInlinePreview.style.display =
+            "none";
+    }
+}
+
+
+async function uploadSignatureImage() {
+
+    if (!signatureImageUploadInput ||
+        !signatureImageUploadInput.files.length) {
+
+        alert("Please select an image file to upload.");
+        return;
+    }
+
+
+    const file =
+        signatureImageUploadInput.files[0];
+
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+
+    if (uploadSignatureBtn) {
+        uploadSignatureBtn.disabled = true;
+    }
+
+    if (uploadSignatureStatus) {
+        uploadSignatureStatus.textContent =
+            "⏳ Uploading...";
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/signatures/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (response.ok && data.filename) {
+
+            if (uploadSignatureStatus) {
+                uploadSignatureStatus.textContent =
+                    `✅ ${data.filename} uploaded`;
+            }
+
+            // Reload the list and auto-select the new file
+            await loadSignatureImages(data.filename);
+
+            // Clear the file input
+            signatureImageUploadInput.value = "";
+
+
+            setTimeout(() => {
+
+                if (uploadSignatureStatus) {
+                    uploadSignatureStatus.textContent = "";
+                }
+
+            }, 3000);
+
+
+        } else {
+
+            const msg =
+                data.detail || "Upload failed.";
+
+            if (uploadSignatureStatus) {
+                uploadSignatureStatus.textContent =
+                    `❌ ${msg}`;
+            }
+        }
+
+
+    } catch (err) {
+
+        console.error(
+            "[Signatures] Upload error:",
+            err
+        );
+
+        if (uploadSignatureStatus) {
+            uploadSignatureStatus.textContent =
+                "❌ Upload failed. Check console.";
+        }
+
+    } finally {
+
+        if (uploadSignatureBtn) {
+            uploadSignatureBtn.disabled = false;
+        }
+    }
 }
 
 
@@ -677,6 +907,11 @@ async function handleGeneratePDF() {
             ? signatureAuthorityField.value.trim()
             : "";
 
+    const signatureImage =
+        signatureImageSelect
+            ? signatureImageSelect.value.trim()
+            : "";
+
     const wordLimit =
         parseInt(wordLimitField.value) || 250;
 
@@ -811,7 +1046,10 @@ async function handleGeneratePDF() {
                             wordLimit,
 
                         signature_authority:
-                            signatureAuthority
+                            signatureAuthority,
+
+                        signature_image:
+                            signatureImage || null
                     })
                 }
             );
@@ -1053,6 +1291,27 @@ if (signatureAuthorityField) {
 }
 
 
+if (signatureImageSelect) {
+
+    signatureImageSelect.addEventListener(
+        "change",
+        () => {
+            updateInlineSignatureImagePreview();
+            updateSignaturePreview();
+        }
+    );
+}
+
+
+if (uploadSignatureBtn) {
+
+    uploadSignatureBtn.addEventListener(
+        "click",
+        uploadSignatureImage
+    );
+}
+
+
 if (generateAiBtn) {
 
     generateAiBtn.addEventListener(
@@ -1084,6 +1343,9 @@ updateTopicPreview();
 updateSubjectPreview();
 
 updateSignaturePreview();
+
+// Load saved signature images into the dropdown
+loadSignatureImages();
 
 if (previewDate) {
 
