@@ -5,3 +5,4 @@ storage/pdfs/
 storage/letterhead/
 storage/signatures/
 .pytest_cache/
+storage/documents/
