@@ -15,20 +15,17 @@ def generate_letter_content(
     more_information: Optional[str] = None,
 ) -> str:
     """
-    Generate formal institutional letter body content using OpenRouter API
-    with an intelligent template fallback if API key is unconfigured.
+    Generate formal institutional letter body content using Gemini AI
+    with an intelligent template fallback if API key is unconfigured or fails.
     """
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    # Checks for GEMINI_API_KEY first, with GOOGLE_API_KEY as secondary fallback
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
     if api_key:
         try:
-            from openai import OpenAI
+            from google import genai
 
-            # Initialize OpenAI client pointing to OpenRouter's endpoint
-            client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=api_key,
-            )
+            client = genai.Client(api_key=api_key)
 
             prompt = (
                 f"You are writing an official document for Baderia Global Institute of Engineering and Management, Jabalpur (BGIEM).\n"
@@ -51,22 +48,28 @@ def generate_letter_content(
                 f"9. Incorporate the additional information provided in the 'More Information' field to enhance the letter content."
             )
 
-            # Call OpenRouter Chat Completions
-            # You can change the model string to any model supported by OpenRouter
-            response = client.chat.completions.create(
-                model="openrouter/auto",  # or "openai/gpt-4o", "anthropic/claude-3.5-sonnet", "openrouter/free"
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt,
             )
 
-            if response and response.choices and response.choices[0].message.content:
-                return response.choices[0].message.content.strip()
+            if response and response.text:
+                return response.text.strip()
 
         except Exception as e:
-            print(f"[AI Service] OpenRouter API call failed: {e}. Falling back to template generator.")
+            print(f"[AI Service] Gemini API call failed: {e}. Falling back to template generator.")
+            # Explicitly return fallback content on exception so the backend never sends None
+            return _generate_fallback_letter(
+                document_type_name=document_type_name,
+                student_name=student_name,
+                enrollment_no=enrollment_no,
+                topic=topic,
+                subject=subject,
+                word_limit=word_limit,
+                more_information=more_information,
+            )
 
-    # Smart Fallback Generator (Runs if API key is not provided or API fails)
+    # Fallback Generator (Runs if API key is not configured in .env)
     return _generate_fallback_letter(
         document_type_name=document_type_name,
         student_name=student_name,

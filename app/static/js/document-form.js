@@ -941,18 +941,6 @@ async function handleGeneratePDF() {
     }
 
 
-    if (!enrollmentNo) {
-
-        alert(
-            "Enrollment Number is required."
-        );
-
-        enrollmentField.focus();
-
-        return;
-    }
-
-
     if (!studentName) {
 
         alert(

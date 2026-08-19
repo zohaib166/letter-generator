@@ -7,3 +7,4 @@ supabase
 weasyprint
 pillow
 reportlab
+google-genai
