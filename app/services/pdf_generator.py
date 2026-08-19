@@ -853,8 +853,8 @@ def generate_document_pdf(
     num_text_lines = len(text_lines)
 
     # Image dimensions in PDF points
-    SIG_IMG_HEIGHT = 40   # pt — roughly 14mm, proportional width
-    SIG_IMG_GAP    = 6    # pt gap between image and text
+    SIG_IMG_HEIGHT = 75   # pt — roughly 14mm, proportional width
+    SIG_IMG_GAP    = 2    # pt gap between image and text
 
     # Calculate the baseline of the bottom text line
     signature_y = 98
