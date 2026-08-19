@@ -8,6 +8,7 @@ const nameField = document.getElementById("student_name");
 const topicField = document.getElementById("topic");
 const subjectField = document.getElementById("subject");
 const wordLimitField = document.getElementById("word_limit");
+const moreInformationField = document.getElementById("more_information");
 const bodyField = document.getElementById("body");
 const signatureAuthorityField = document.getElementById("signature_authority");
 
@@ -821,7 +822,10 @@ async function handleGenerateAI() {
                             subject,
 
                         word_limit:
-                            wordLimit
+                            wordLimit,
+
+                        more_information:
+                            moreInformation || ""
                     })
                 }
             );

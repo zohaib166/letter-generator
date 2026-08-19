@@ -29,6 +29,8 @@ class AIGenerateRequest(BaseModel):
     topic: str
     subject: Optional[str] = None
     word_limit: int = Field(default=250, ge=50, le=5000)
+    # Simplified: Single field for additional information
+    more_information: Optional[str] = None
 
 
 class PDFGenerateRequest(BaseModel):
@@ -109,6 +111,8 @@ def api_generate_ai(payload: AIGenerateRequest):
             topic=payload.topic,
             subject=payload.subject,
             word_limit=payload.word_limit,
+            # Simplified: Pass additional information as single field
+            more_information=payload.more_information,
         )
 
         return {
