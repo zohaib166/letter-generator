@@ -240,6 +240,11 @@ main {
 }
 
 
+#signature_authority {
+    min-height: 100px;
+}
+
+
 .small-field input {
     width: 120px;
 }
