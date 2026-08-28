@@ -12,6 +12,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from xml.sax.saxutils import escape
+from html import unescape
 
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -312,11 +313,33 @@ subject_style = ParagraphStyle(
 )
 
 
+receiver_style = ParagraphStyle(
+
+    "DocumentReceiver",
+
+    fontName=FONT_NAME,
+
+    fontSize=12,
+
+    leading=14,
+
+    alignment=TA_LEFT,
+
+    textColor=colors.black,
+
+    spaceAfter=10,
+
+    boldFontName=BOLD_FONT,
+    italicFontName=ITALIC_FONT,
+    boldItalicFontName=BOLD_ITALIC_FONT,
+)
+
+
 # ---------------------------------------------------------
 # HTML → REPORTLAB
 # ---------------------------------------------------------
 
-def html_to_flowables(html: str):
+def html_to_flowables(html: str, style: ParagraphStyle = None):
     """
     Convert contenteditable HTML into ReportLab Paragraphs.
 
@@ -333,6 +356,8 @@ def html_to_flowables(html: str):
 
     if not html:
         return []
+
+    style = style or body_style
 
     # Remove clipboard fragment markers
     html = re.sub(
@@ -430,17 +455,27 @@ def html_to_flowables(html: str):
         flags=re.IGNORECASE
     )
 
-    # Remove div wrappers
+    # Convert div wrappers into line breaks
+    # (contenteditable inserts a new <div> per line on Enter,
+    # so a break must precede each one, not follow it)
     html = re.sub(
         r"<div\b[^>]*>",
-        "",
+        "<br/>",
         html,
         flags=re.IGNORECASE
     )
 
     html = re.sub(
         r"</div\s*>",
-        "<br/>",
+        "",
+        html,
+        flags=re.IGNORECASE
+    )
+
+    # Strip a leading break introduced when content starts with a <div>
+    html = re.sub(
+        r"^(?:\s*<br/>)+",
+        "",
         html,
         flags=re.IGNORECASE
     )
@@ -494,11 +529,91 @@ def html_to_flowables(html: str):
         flowables.append(
             Paragraph(
                 part,
-                body_style
+                style
             )
         )
 
     return flowables
+
+
+def parse_signature_lines(html: str):
+    """
+    Convert Signing Authority rich-text HTML into a list of
+    (align, plain_text, font) tuples for line-by-line canvas drawing.
+    """
+
+    if not html:
+        return []
+
+    html = re.sub(
+        r"<!--\s*(?:Start|End)Fragment\s*-->",
+        "",
+        html,
+        flags=re.IGNORECASE
+    )
+
+    html = re.sub(r"<strong\b[^>]*>", "<b>", html, flags=re.IGNORECASE)
+    html = re.sub(r"</strong\s*>", "</b>", html, flags=re.IGNORECASE)
+    html = re.sub(r"<em\b[^>]*>", "<i>", html, flags=re.IGNORECASE)
+    html = re.sub(r"</em\s*>", "</i>", html, flags=re.IGNORECASE)
+    html = re.sub(r"<br\s*/?>", "<br/>", html, flags=re.IGNORECASE)
+
+    block_pattern = re.compile(
+        r"<(div|p)\b([^>]*)>(.*?)</\1\s*>",
+        re.IGNORECASE | re.DOTALL
+    )
+
+    chunks = []
+
+    def split_chunk(chunk, align):
+        for part in re.split(r"<br/>", chunk, flags=re.IGNORECASE):
+            part = part.strip()
+            if part:
+                chunks.append((align, part))
+
+    last_end = 0
+
+    for m in block_pattern.finditer(html):
+        # Default alignment matches the original always-centred signature block
+        split_chunk(html[last_end:m.start()], "center")
+
+        align_match = re.search(
+            r"text-align:\s*(left|center|right|justify)",
+            m.group(2),
+            re.IGNORECASE
+        )
+        align = align_match.group(1).lower() if align_match else "center"
+
+        split_chunk(m.group(3), align)
+
+        last_end = m.end()
+
+    split_chunk(html[last_end:], "center")
+
+    parsed = []
+
+    for align, chunk in chunks:
+        is_bold = bool(re.search(r"<b>", chunk, re.IGNORECASE))
+        is_italic = bool(re.search(r"<i>", chunk, re.IGNORECASE))
+
+        plain = re.sub(r"<[^>]+>", "", chunk)
+        plain = unescape(plain).strip()
+
+        if not plain:
+            continue
+
+        if is_bold and is_italic:
+            font = BOLD_ITALIC_FONT
+        elif is_bold:
+            font = BOLD_FONT
+        elif is_italic:
+            font = ITALIC_FONT
+        else:
+            font = FONT_NAME
+
+        parsed.append((align, plain, font))
+
+    return parsed
 
 # ---------------------------------------------------------
 # PDF GENERATOR
@@ -510,7 +625,8 @@ def generate_document_pdf(
     enrollment_no: str,
     topic: str,
     subject: Optional[str],
-    body: str,
+    receiver_address: Optional[str] = None,
+    body: str = "",
     signature_authority: Optional[str] = None,
     signature_image: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -663,19 +779,11 @@ def generate_document_pdf(
     # 4. TOPIC
     # =====================================================
 
-    # This is the heading that appears between
-    # Reference/Date and Subject in the live preview.
-
     topic = (
         topic or ""
     ).strip()
 
-
-    topic_top = (
-        meta_top
-        + 35
-    )
-
+    topic_top = meta_top + 35
 
     if topic:
 
@@ -684,7 +792,6 @@ def generate_document_pdf(
             topic_style
         )
 
-
         topic_width, topic_height = (
             topic_paragraph.wrap(
                 content_width,
@@ -692,31 +799,45 @@ def generate_document_pdf(
             )
         )
 
-
         topic_paragraph.drawOn(
             pdf,
             content_left,
-            page_height
-            - topic_top
-            - topic_height
+            page_height - topic_top - topic_height
         )
 
-
-        current_top = (
-            topic_top
-            + topic_height
-            + 8
-        )
-
+        current_top = topic_top + topic_height + 8
     else:
-
-        current_top = (
-            topic_top
-        )
-
+        current_top = topic_top
 
     # =====================================================
-    # 5. SUBJECT
+    # 5. RECEIVER ADDRESS
+    # =====================================================
+
+    receiver_address = (receiver_address or "").strip()
+
+    if receiver_address:
+        receiver_flowables = html_to_flowables(
+            receiver_address,
+            style=receiver_style
+        )
+
+        receiver_top = current_top
+
+        for flowable in receiver_flowables:
+            flowable_width, flowable_height = flowable.wrap(
+                content_width, 1000
+            )
+            flowable.drawOn(
+                pdf,
+                content_left,
+                page_height - receiver_top - flowable_height
+            )
+            receiver_top += flowable_height
+
+        current_top = receiver_top + 8
+
+    # =====================================================
+    # 6. SUBJECT
     # =====================================================
 
     if subject and subject.strip():
@@ -844,46 +965,56 @@ def generate_document_pdf(
     # Reserve space: image height + gap + text lines
     TEXT_LINE_H = FONT_SIZE + 3
 
-    text_lines = (
-        [l.strip() for l in signature_text.split("\n") if l.strip()]
-        if signature_text
-        else []
-    )
+    signature_lines = parse_signature_lines(signature_text)
 
-    num_text_lines = len(text_lines)
+    num_text_lines = len(signature_lines)
 
     # Image dimensions in PDF points
-    SIG_IMG_HEIGHT = 75   # pt — roughly 14mm, proportional width
-    SIG_IMG_GAP    = 2    # pt gap between image and text
+    # Keep these identical to the preview box size: 220px wide x 95px tall
+    SIG_IMG_HEIGHT = 95
+    SIG_IMG_GAP    = 2
+    MAX_SIG_IMG_WIDTH = 220 * PX_TO_PT
 
     # Calculate the baseline of the bottom text line
     signature_y = 98
 
-    # We match the min-width: 180px in preview (180px * 0.75 = 135 pt)
-    sig_block_width = 180 * PX_TO_PT
+    sig_block_width = MAX_SIG_IMG_WIDTH
     sig_center_x = signature_x - (sig_block_width / 2)
+    sig_left_x = sig_center_x - (sig_block_width / 2)
+    sig_right_x = sig_center_x + (sig_block_width / 2)
 
-    # Draw text lines (bottom-up, centred)
-    pdf.setFont(
-        BOLD_FONT,
-        FONT_SIZE
-    )
+    # Draw text lines (bottom-up), honoring each line's font and alignment
 
-    if text_lines:
+    if signature_lines:
 
-        for index, line in enumerate(text_lines):
+        for index, (align, text, font) in enumerate(signature_lines):
 
-            pdf.drawCentredString(
-                sig_center_x,
+            pdf.setFont(
+                font,
+                FONT_SIZE
+            )
+
+            line_y = (
                 signature_y
                 + (
                     (num_text_lines - index - 1)
                     * TEXT_LINE_H
-                ),
-                line
+                )
             )
 
+            if align == "left":
+                pdf.drawString(sig_left_x, line_y, text)
+            elif align == "right":
+                pdf.drawRightString(sig_right_x, line_y, text)
+            else:
+                pdf.drawCentredString(sig_center_x, line_y, text)
+
     else:
+
+        pdf.setFont(
+            BOLD_FONT,
+            FONT_SIZE
+        )
 
         pdf.drawCentredString(
             sig_center_x,
@@ -901,8 +1032,12 @@ def generate_document_pdf(
         with PILImage.open(sig_image_path) as img:
             img_w, img_h = img.size
 
-        aspect = img_w / img_h if img_h else 1
-        sig_img_width = SIG_IMG_HEIGHT * aspect
+        max_width = MAX_SIG_IMG_WIDTH
+        max_height = SIG_IMG_HEIGHT
+
+        scale = min(max_width / img_w, max_height / img_h) if img_w and img_h else 1
+        sig_img_width = img_w * scale
+        sig_img_height = img_h * scale
 
         img_y = (
             signature_y
@@ -917,7 +1052,7 @@ def generate_document_pdf(
             img_x,
             img_y,
             width=sig_img_width,
-            height=SIG_IMG_HEIGHT,
+            height=sig_img_height,
             mask="auto",
         )
 

@@ -6,9 +6,8 @@ const docTypeCodeField = document.getElementById("document_type_code");
 const enrollmentField = document.getElementById("enrollment_no");
 const nameField = document.getElementById("student_name");
 const topicField = document.getElementById("topic");
+const receiverAddressField = document.getElementById("receiver_address");
 const subjectField = document.getElementById("subject");
-const wordLimitField = document.getElementById("word_limit");
-const moreInformationField = document.getElementById("more_information");
 const bodyField = document.getElementById("body");
 const signatureAuthorityField = document.getElementById("signature_authority");
 
@@ -24,8 +23,6 @@ const uploadSignatureBtn =
 const uploadSignatureStatus =
     document.getElementById("upload-signature-status");
 
-const generateAiBtn = document.getElementById("generate-ai");
-const aiStatus = document.getElementById("ai-status");
 const generatePdfBtn = document.getElementById("generate-pdf");
 const wordCount = document.getElementById("word-count");
 
@@ -50,6 +47,9 @@ const previewReference =
 
 const previewDate =
     document.getElementById("preview-date");
+
+const previewReceiverAddress =
+    document.getElementById("preview-receiver-address");
 
 const previewTopic =
     document.getElementById("preview-topic");
@@ -179,10 +179,6 @@ function handleDocumentTypeChange() {
             subjectField.value = "";
         }
 
-        if (wordLimitField) {
-            wordLimitField.value = 250;
-        }
-
         currentReferenceNumber = "";
 
         if (previewReference) {
@@ -230,11 +226,6 @@ function handleDocumentTypeChange() {
             subjectField.value =
                 defaults.subject || "";
         }
-
-        if (wordLimitField) {
-            wordLimitField.value =
-                defaults.wordLimit || 250;
-        }
     }
 
 
@@ -271,7 +262,7 @@ function countWords(text) {
 
 function updateWordCount() {
 
-    if (!bodyField || !wordLimitField || !wordCount) {
+    if (!bodyField || !wordCount) {
         return;
     }
 
@@ -281,25 +272,11 @@ function updateWordCount() {
     const count =
         countWords(text);
 
-    const limit =
-        parseInt(wordLimitField.value) || 0;
+    wordCount.textContent =
+        `${count} words`;
 
-
-    if (limit > 0) {
-
-        wordCount.textContent =
-            `${count} / ${limit} words`;
-
-        wordCount.style.color =
-            count > limit
-                ? "#dc2626"
-                : "#6b7280";
-
-    } else {
-
-        wordCount.textContent =
-            `${count} words`;
-    }
+    wordCount.style.color =
+        "#6b7280";
 }
 
 
@@ -391,9 +368,92 @@ function sanitizeRichText(html) {
     return template.innerHTML;
 }
 
+function sanitizeSignatureRichText(html) {
+
+    const template =
+        document.createElement("template");
+
+    template.innerHTML = html;
+
+
+    const allowedTags = [
+        "P",
+        "BR",
+        "STRONG",
+        "B",
+        "EM",
+        "I",
+        "DIV",
+        "SPAN"
+    ];
+
+
+    template.content
+        .querySelectorAll("*")
+        .forEach(element => {
+
+            if (!allowedTags.includes(element.tagName)) {
+
+                element.replaceWith(
+                    document.createTextNode(
+                        element.textContent
+                    )
+                );
+
+                return;
+            }
+
+
+            /*
+             * Only keep the text-align part of
+             * an inline style (alignment buttons),
+             * strip everything else.
+             */
+
+            const align =
+                element.style && element.style.textAlign;
+
+            [...element.attributes]
+                .forEach(attribute => {
+
+                    element.removeAttribute(
+                        attribute.name
+                    );
+
+                });
+
+            if (align) {
+                element.style.textAlign = align;
+            }
+
+        });
+
+
+    return template.innerHTML;
+}
+
 /* ==========================================
    SUBJECT PREVIEW
    ========================================== */
+
+function updateReceiverAddressPreview() {
+
+    if (!receiverAddressField || !previewReceiverAddress) {
+        return;
+    }
+
+    const html = receiverAddressField.innerHTML.trim();
+
+    if (!html) {
+        previewReceiverAddress.style.display = "none";
+        previewReceiverAddress.innerHTML = "";
+        return;
+    }
+
+    previewReceiverAddress.style.display = "block";
+    previewReceiverAddress.innerHTML = sanitizeRichText(html);
+}
+
 
 function updateSubjectPreview() {
 
@@ -466,7 +526,7 @@ function updateSignaturePreview() {
 
 
     const authority =
-        signatureAuthorityField.value.trim();
+        signatureAuthorityField.innerHTML.trim();
 
 
     if (!authority) {
@@ -476,20 +536,8 @@ function updateSignaturePreview() {
 
     } else {
 
-        /*
-           Preserve multiple lines entered
-           by the user.
-        */
-
-        const lines =
-            authority
-                .split("\n")
-                .map(line => escapeHtml(line.trim()))
-                .filter(line => line.length > 0);
-
-
         previewSignature.innerHTML =
-            lines.join("<br>");
+            sanitizeSignatureRichText(authority);
     }
 
 
@@ -726,166 +774,6 @@ async function uploadSignatureImage() {
 
 
 /* ==========================================
-   AI GENERATION
-   ========================================== */
-
-async function handleGenerateAI() {
-
-    const studentName =
-        nameField ? nameField.value.trim() : "";
-
-    const topic =
-        topicField ? topicField.value.trim() : "";
-
-    const enrollmentNo =
-        enrollmentField ? enrollmentField.value.trim() : "";
-
-    const subject =
-        subjectField ? subjectField.value.trim() : "";
-
-    const wordLimit =
-        wordLimitField
-            ? parseInt(wordLimitField.value) || 250
-            : 250;
-
-    const docCode =
-        docTypeCodeField
-            ? docTypeCodeField.value
-            : "";
-
-
-    if (!docCode) {
-
-        alert(
-            "Please select a document type first."
-        );
-
-        if (docTypeCodeField) {
-            docTypeCodeField.focus();
-        }
-
-        return;
-    }
-
-
-    if (!studentName || !topic) {
-
-        alert(
-            "Please enter both Student Name and Topic / Purpose before generating with AI."
-        );
-
-        if (!studentName && nameField) {
-            nameField.focus();
-        } else if (topicField) {
-            topicField.focus();
-        }
-
-        return;
-    }
-
-
-    generateAiBtn.disabled = true;
-    generateAiBtn.style.opacity = "0.7";
-
-    aiStatus.textContent =
-        "✨ Draft with AI...";
-
-
-    try {
-
-        const response =
-            await fetch(
-                "/api/documents/generate-ai",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        document_type_code:
-                            docCode,
-
-                        student_name:
-                            studentName,
-
-                        enrollment_no:
-                            enrollmentNo || "N/A",
-
-                        topic:
-                            topic,
-
-                        subject:
-                            subject,
-
-                        word_limit:
-                            wordLimit,
-
-                        more_information:
-                            moreInformation || ""
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (response.ok && data.body) {
-
-            bodyField.innerHTML =
-                sanitizeRichText(
-                    data.body
-                );
-
-            updateWordCount();
-            updateBodyPreview();
-
-            aiStatus.textContent =
-                "✅ Generated successfully!";
-
-        } else {
-
-            aiStatus.textContent =
-                `❌ ${data.detail ||
-                "AI generation failed."
-                }`;
-        }
-
-
-    } catch (err) {
-
-        console.error(
-            "AI Generation error:",
-            err
-        );
-
-        aiStatus.textContent =
-            "❌ Network error generating letter.";
-
-    } finally {
-
-        generateAiBtn.disabled = false;
-        generateAiBtn.style.opacity = "1";
-
-        setTimeout(() => {
-
-            if (
-                aiStatus.textContent.includes("✅")
-            ) {
-                aiStatus.textContent = "";
-            }
-
-        }, 3000);
-    }
-}
-
-
-/* ==========================================
    PDF GENERATION
    ========================================== */
 
@@ -900,6 +788,11 @@ async function handleGeneratePDF() {
     const topic =
         topicField.value.trim();
 
+    const receiverAddress =
+        receiverAddressField
+            ? receiverAddressField.innerHTML.trim()
+            : "";
+
     const subject =
         subjectField.value.trim();
 
@@ -908,16 +801,13 @@ async function handleGeneratePDF() {
 
     const signatureAuthority =
         signatureAuthorityField
-            ? signatureAuthorityField.value.trim()
+            ? signatureAuthorityField.innerHTML.trim()
             : "";
 
     const signatureImage =
         signatureImageSelect
             ? signatureImageSelect.value.trim()
             : "";
-
-    const wordLimit =
-        parseInt(wordLimitField.value) || 250;
 
     const docCode =
         docTypeCodeField
@@ -1031,11 +921,11 @@ async function handleGeneratePDF() {
                         subject:
                             subject,
 
+                        receiver_address:
+                            receiverAddress,
+
                         body:
                             body,
-
-                        word_limit:
-                            wordLimit,
 
                         signature_authority:
                             signatureAuthority,
@@ -1124,26 +1014,23 @@ if (docTypeCodeField) {
 }
 
 
-if (bodyField) {
-
-    bodyField.addEventListener(
-        "input",
-        () => {
-
-            updateWordCount();
-            updateBodyPreview();
-
-        }
-    );
-}
-
 /* ==========================================
-   RICH TEXT PASTE
+   RICH TEXT EDITOR SETUP (shared by
+   Body and Receiver Address fields)
    ========================================== */
 
-if (bodyField) {
+function setupRichTextEditor(field, onUpdate, sanitizer = sanitizeRichText) {
 
-    bodyField.addEventListener(
+    if (!field) {
+        return;
+    }
+
+    field.addEventListener(
+        "input",
+        onUpdate
+    );
+
+    field.addEventListener(
         "paste",
         event => {
 
@@ -1165,10 +1052,10 @@ if (bodyField) {
 
             if (html) {
 
-                bodyField.focus();
+                field.focus();
 
                 const cleanHtml =
-                    sanitizeRichText(html);
+                    sanitizer(html);
 
                 document.execCommand(
                     "insertHTML",
@@ -1186,76 +1073,80 @@ if (bodyField) {
 
             }
 
-            updateWordCount();
-            updateBodyPreview();
+            onUpdate();
 
         }
     );
 
-}
 
-/* ==========================================
-   RICH TEXT TOOLBAR
-   ========================================== */
+    const toolbar =
+        document.querySelector(
+            `.rich-text-toolbar[data-target="${field.id}"]`
+        );
 
-const richTextToolbar =
-    document.querySelector(".rich-text-toolbar");
+    if (toolbar) {
 
+        toolbar
+            .querySelectorAll("button[data-command]")
+            .forEach(button => {
 
-if (richTextToolbar && bodyField) {
+                button.addEventListener(
+                    "mousedown",
+                    event => {
 
-    richTextToolbar
-        .querySelectorAll("button[data-command]")
-        .forEach(button => {
+                        /*
+                         * Prevent losing the current
+                         * text selection.
+                         */
 
-            button.addEventListener(
-                "mousedown",
-                event => {
-
-                    /*
-                     * Prevent losing the current
-                     * text selection.
-                     */
-
-                    event.preventDefault();
-                }
-            );
+                        event.preventDefault();
+                    }
+                );
 
 
-            button.addEventListener(
-                "click",
-                () => {
+                button.addEventListener(
+                    "click",
+                    () => {
 
-                    const command =
-                        button.dataset.command;
+                        const command =
+                            button.dataset.command;
 
-                    bodyField.focus();
+                        field.focus();
 
-                    document.execCommand(
-                        command,
-                        false,
-                        null
-                    );
+                        document.execCommand(
+                            command,
+                            false,
+                            null
+                        );
 
-                    updateWordCount();
-                    updateBodyPreview();
+                        onUpdate();
 
-                }
-            );
+                    }
+                );
 
-        });
-
+            });
+    }
 }
 
 
-if (wordLimitField) {
+setupRichTextEditor(
+    bodyField,
+    () => {
+        updateWordCount();
+        updateBodyPreview();
+    }
+);
 
-    wordLimitField.addEventListener(
-        "input",
-        updateWordCount
-    );
-}
+setupRichTextEditor(
+    receiverAddressField,
+    updateReceiverAddressPreview
+);
 
+setupRichTextEditor(
+    signatureAuthorityField,
+    updateSignaturePreview,
+    sanitizeSignatureRichText
+);
 
 if (subjectField) {
 
@@ -1270,15 +1161,6 @@ if (topicField) {
     topicField.addEventListener(
         "input",
         updateTopicPreview
-    );
-}
-
-
-if (signatureAuthorityField) {
-
-    signatureAuthorityField.addEventListener(
-        "input",
-        updateSignaturePreview
     );
 }
 
@@ -1304,15 +1186,6 @@ if (uploadSignatureBtn) {
 }
 
 
-if (generateAiBtn) {
-
-    generateAiBtn.addEventListener(
-        "click",
-        handleGenerateAI
-    );
-}
-
-
 if (generatePdfBtn) {
 
     generatePdfBtn.addEventListener(
@@ -1329,6 +1202,8 @@ if (generatePdfBtn) {
 updateWordCount();
 
 updateBodyPreview();
+
+updateReceiverAddressPreview();
 
 updateTopicPreview();
 

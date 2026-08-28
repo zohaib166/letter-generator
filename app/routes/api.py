@@ -41,6 +41,7 @@ class PDFGenerateRequest(BaseModel):
     student_name: str
     topic: str
     subject: Optional[str] = None
+    receiver_address: Optional[str] = None
     body: str
     word_limit: int = 250
     signature_authority: Optional[str] = None
@@ -201,6 +202,7 @@ def api_generate_pdf(payload: PDFGenerateRequest):
             enrollment_no=payload.enrollment_no,
             topic=payload.topic,
             subject=payload.subject,
+            receiver_address=payload.receiver_address,
             body=payload.body,
             signature_authority=payload.signature_authority,
             signature_image=payload.signature_image,

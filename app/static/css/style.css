@@ -244,6 +244,10 @@ main {
     min-height: 100px;
 }
 
+#receiver_address {
+    min-height: 100px;
+}
+
 
 .small-field input {
     width: 120px;
@@ -533,6 +537,39 @@ main {
 
 
 /* =========================================================
+   RECEIVER ADDRESS
+   ========================================================= */
+
+.preview-receiver-address {
+
+    display: block;
+
+    margin-top: 8px;
+    margin-bottom: 12px;
+
+    font-family:
+        "Times New Roman",
+        Times,
+        serif;
+
+    font-size: 12pt;
+
+    line-height: 1.5;
+
+    text-align: left;
+}
+
+.preview-receiver-address p {
+
+    margin-top: 0;
+
+    margin-bottom: 8px;
+
+    text-align: left;
+}
+
+
+/* =========================================================
    SUBJECT
    ========================================================= */
 
@@ -617,11 +654,38 @@ main {
 }
 
 
-.signature-placeholder {
+#preview-signature-img {
 
-    min-width: 180px;
+    display: block;
+
+    max-width: 220px;
+    max-height: 95px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto 6px auto;
+}
+
+
+#preview-signature {
+
+    display: block;
 
     text-align: center;
+    line-height: 1.4;
+}
+
+
+.signature-placeholder {
+
+    min-width: 220px;
+    max-width: 220px;
+
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
 }
 
 
