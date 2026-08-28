@@ -3,8 +3,6 @@
    ========================================== */
 
 const docTypeCodeField = document.getElementById("document_type_code");
-const enrollmentField = document.getElementById("enrollment_no");
-const nameField = document.getElementById("student_name");
 const topicField = document.getElementById("topic");
 const receiverAddressField = document.getElementById("receiver_address");
 const subjectField = document.getElementById("subject");
@@ -779,12 +777,6 @@ async function uploadSignatureImage() {
 
 async function handleGeneratePDF() {
 
-    const enrollmentNo =
-        enrollmentField.value.trim();
-
-    const studentName =
-        nameField.value.trim();
-
     const topic =
         topicField.value.trim();
 
@@ -826,18 +818,6 @@ async function handleGeneratePDF() {
         );
 
         docTypeCodeField.focus();
-
-        return;
-    }
-
-
-    if (!studentName) {
-
-        alert(
-            "Student Name is required."
-        );
-
-        nameField.focus();
 
         return;
     }
@@ -910,10 +890,10 @@ async function handleGeneratePDF() {
                             "",
 
                         enrollment_no:
-                            enrollmentNo,
+                            "",
 
                         student_name:
-                            studentName,
+                            "",
 
                         topic:
                             topic,

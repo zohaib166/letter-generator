@@ -24,8 +24,8 @@ router = APIRouter(
 
 class AIGenerateRequest(BaseModel):
     document_type_code: str
-    student_name: str
-    enrollment_no: str
+    student_name: Optional[str] = ""
+    enrollment_no: Optional[str] = ""
     topic: str
     subject: Optional[str] = None
     word_limit: int = Field(default=250, ge=50, le=5000)
@@ -37,8 +37,8 @@ class PDFGenerateRequest(BaseModel):
     document_type_id: Optional[int] = None
     document_type_code: str
     reference_no: Optional[str] = None
-    enrollment_no: str
-    student_name: str
+    enrollment_no: Optional[str] = ""
+    student_name: Optional[str] = ""
     topic: str
     subject: Optional[str] = None
     receiver_address: Optional[str] = None
