@@ -1010,6 +1010,31 @@ function setupRichTextEditor(field, onUpdate, sanitizer = sanitizeRichText) {
         onUpdate
     );
 
+    if (field.id === "signature_authority") {
+
+        field.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Enter") {
+
+                    /*
+                     * Use a plain line break instead of a new
+                     * paragraph/div so lines stay tightly spaced.
+                     */
+
+                    event.preventDefault();
+
+                    document.execCommand(
+                        "insertLineBreak"
+                    );
+
+                    onUpdate();
+                }
+            }
+        );
+    }
+
     field.addEventListener(
         "paste",
         event => {

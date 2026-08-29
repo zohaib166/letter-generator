@@ -1089,3 +1089,20 @@ main {
 
     padding-left: 28px;
 }
+
+
+/* Tight line spacing for signing authority (name/title/institute lines) */
+
+#signature_authority {
+
+    line-height: 1.2;
+}
+
+
+#signature_authority p,
+#signature_authority div {
+
+    margin-top: 0;
+
+    margin-bottom: 1pt;
+}
